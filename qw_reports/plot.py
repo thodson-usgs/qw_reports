@@ -2,8 +2,9 @@
 Plotting tools
 """
 
-def nitrate_plot(con_data, sur_data, filename=None, title=None):
+def plot_nitrate(con_data, sur_data, filename=None, title=None):
     """
+    Note: this function should use a regression, based on the error of current nitrate sensors
     Args:
         df: df containing nitrate and discharge
         df2: df containing nitrate samples
@@ -70,7 +71,124 @@ def nitrate_plot(con_data, sur_data, filename=None, title=None):
 
         plt.savefig(filename, bbox_inches = 'tight')
 
-def plot_prediction_ts(data, obs, response_var, ax, color='blue'):
+
+def plot_model_ts(model, filename=None, title=None, color='blue',
+                 constituent_name=None, units='mg/L'):
+    """ Generate plots of discharge, predicted concentration and predicted load.
+
+    Parameters
+    ----------
+    model : SurrogateRatingModel:
+
+    constituent_name : string
+        name of constituent (and units of measure) for plot labels.
+
+    units : string
+        units of measure for plot labels
+    """
+
+    #rating_model = make_ssc_model(con_data, sur_data)
+    #need to get discharge
+    response_var = model.get_constituent_variable_names()
+
+    if not constituent_name:
+        constituent_name = response_var
+
+    df = sur_data.get_data() #FIXME where can i find discharge
+    obs = model.get_model_dataset()
+
+    predicted_data = model._model.predict_response_variable(explanatory_data=rating_model._surrogate_data,
+                                                            raw_response=True,
+                                                            bias_correction=True,
+                                                            prediction_interval=True)
+
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True, figsize=HP_FIGSIZE, dpi=DPI)
+    fig.subplots_adjust(hspace=0)
+
+    # make plots
+    ax1.plot(df.index, df['Discharge'])
+    plot_predicted_ts(predicted_data, obs, response_var, ax2, color=color)
+    plot_load_ts(predicted_data, df.Discharge, response_var, ax3)
+
+    ax2.yaxis.tick_right()
+    ax2.yaxis.set_label_position('right')
+    ax1.set_ylabel('Streamflow, in cfs')
+    ax2.set_ylabel('{}, in {}'.format(constituent_name, units)
+    ax3.set_ylabel('{}, in tons/day'.format(constituent_name)
+
+    #set grid
+    for ax in (ax1, ax2, ax3):
+        ax.grid(which='major',axis='x',linestyle='--')
+        #/ax.xaxis.grid() # vertical lines
+
+    ax1.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+    ax2.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+    ax3.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+    fig.autofmt_xdate()
+
+    if title:
+        fig.suptitle(title)
+
+    if filename:
+
+        fig.savefig(filename, bbox_inches='tight')
+
+    else:
+        fig.show()
+
+
+def plot_model(model, filename=None, title=None):
+    """Make plots to assess model fit.
+
+    Parameters
+    ----------
+    model : SurrogateRatingModel
+
+    filename : string
+        path to save the file
+    """
+
+    plt.figure(figsize=MODEL_FIGSIZE)
+    G = gridspec.GridSpec(3,2)
+    ax1 = plt.subplot(G[0,0])
+    ax2 = plt.subplot(G[0,1])
+    ax3 = plt.subplot(G[1,0])
+    ax4 = plt.subplot(G[1,1])
+    ax5 = plt.subplot(G[-1, :])
+    #fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2,2, figsize=(15,8))
+
+    model.plot(plot_type='model_pred_vs_obs', ax=ax1)
+    model.plot(plot_type='resid_probability', ax=ax2)
+    model.plot(plot_type='resid_vs_fitted', ax=ax3)
+    model.plot(plot_type='quantile', ax=ax4)
+    model.plot(plot_type='resid_vs_time', ax=ax5)
+
+    #plt.tight_layout()
+
+    if title:
+        plt.suptitle(title)
+
+    if filename:
+        plt.savefig(filename, bbox_inches = 'tight')
+
+
+def plot_load_ts(data, discharge, response_var, ax, color='black'):
+    """
+    TODO: include discharge in same plot
+    """
+
+    LOAD_CONV = 0.00269688566 #XXX check
+    L90 = '{}_L90.0'.format(response_var)
+    U90 = '{}_U90.0'.format(response_var)
+
+    load = discharge * data[response_var] * LOAD_CONV
+    ax.plot(data.index, load, color=color)
+
+
+def plot_predicted_ts(data, obs, response_var, ax, color='blue'):
+    """
+    """
     L90 = '{}_L90.0'.format(response_var)
     U90 = '{}_U90.0'.format(response_var)
     #obs = rating_model.get_model_dataset()
@@ -95,11 +213,4 @@ def plot_prediction_ts(data, obs, response_var, ax, color='blue'):
     ax.legend(loc='best') 
     #ax.set_ylabel('TP')
 
-def plot_load_ts(data, discharge, response_var, ax, color='black'):
 
-    LOAD_CONV = 0.00269688566 #XXX check
-    L90 = '{}_L90.0'.format(response_var)
-    U90 = '{}_U90.0'.format(response_var)
-
-    load = discharge * data[response_var] * LOAD_CONV
-    ax.plot(data.index, load, color=color)

@@ -33,37 +33,37 @@ FLUX_CONV = mg2lbs * l2cf * interval
 def phos_load(wy, model1, model2):
     start = str(wy-1) + '-10-01'
     end   = str(wy) + '-09-30'
-    
+
     predicted_data_1   = model1._model.predict_response_variable(explanatory_data=model1._surrogate_data,
                                                             raw_response=True,
                                                             bias_correction=True,
                                                             prediction_interval=True)
-    
+
     obs = model1.get_model_dataset()
-    
+
     df = model1._surrogate_data.get_data()
-    
+
     if model2:
-        
+
         pvalue = model2._model._model.fit().f_pvalue
-        
+
         if pvalue < 0.05:
             obs = obs[~obs['Missing']]
             obs2 = model2.get_model_dataset()
             obs2.drop(obs.index, axis=0) #drop anything thats in obs1 from obs2
             obs = obs.append(obs2).sort_index()
-    
-        
+
+
             predicted_data_2 = model2._model.predict_response_variable(explanatory_data=model2._surrogate_data,
                                                             raw_response=True,
                                                             bias_correction=True,
                                                             prediction_interval=True)    
- 
+
             predicted_data_1 = update_merge(predicted_data_2, predicted_data_1, na_only=True)
     flux = df['Discharge'] * predicted_data_1['TP'] * FLUX_CONV
-    
+
     return flux.loc[start:end].sum()
-    
+
 def nitrate_load(wy, sur_data):
     df = sur_data.get_data()
     start = str(wy-1) + '-10-01'
@@ -235,7 +235,7 @@ def plot_model2(model, filename=None, title=None):
     model.plot(plot_type='model_pred_vs_obs', ax=ax1)
     model.plot(plot_type='resid_probability', ax=ax2)
     model.plot(plot_type='resid_vs_fitted', ax=ax3)
-    model.plot(plot_type='quantile', ax=ax4)
+        model.plot(plot_type='quantile', ax=ax4)
     model.plot(plot_type='resid_vs_time', ax=ax5)
     
     #plt.tight_layout()
@@ -261,14 +261,14 @@ def make_ssc_model(con_data, sur_data):
 
 def ssc_plot(con_data, sur_data, filename=None, return_model=False, title=None):
     """ Generate plots of discharge, predicted SSC, and sediment load.
-    
+
     Args:
         con_data: constituent DataManager
         sur_data: surrogate DataManager
     """
-    
+
     rating_model = make_ssc_model(con_data, sur_data)
-    
+
     df = sur_data.get_data()
     obs = rating_model.get_model_dataset()
 
@@ -276,12 +276,12 @@ def ssc_plot(con_data, sur_data, filename=None, return_model=False, title=None):
                                                             raw_response=True,
                                                             bias_correction=True,
                                                             prediction_interval=True)
-    
+
     #predicted_data['SSC_l90'] = np.maximum(0,predicted_data['SSC_l90'])
     #resample to hour filling in at most 2 hours of missing data
     #predicted_data = predicted_data.dropna().resample('60min').ffill(limit=2)
-                                                       
-    
+
+
     fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True, figsize=HP_FIGSIZE, dpi=DPI)
     fig.subplots_adjust(hspace=0)
     
