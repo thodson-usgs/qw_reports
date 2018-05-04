@@ -13,8 +13,7 @@
 
         {"id":"03381495",
          "name":"LittleWabash",
-         "start":"2015-11-01",
-        "proxies":{"00060":"03381500"}},
+         "start":"2015-11-01"},
 
         {"id":"05446500",
          "name":"Rock",
@@ -26,8 +25,7 @@
 
         {"id":"05586300",
          "name":"Illinois",
-         "start":"2012-06-02",
-         "proxies":{"00060":"05586100"}},
+         "start":"2012-06-02"},
 
         {"id":"05595000",
          "name":"Kaskaskia",
@@ -35,13 +33,7 @@
 
         {"id":"05599490",
          "name":"BigMuddy",
-         "start":"2015-10-01"}
-    ],
-
-    "services" :
-        ["iv","qv","qwdata"],
-
-    "proxy_sites" : [
+         "start":"2015-10-01"},
 
         {"id": "03381500",
          "name":"LittleWabashQ",
@@ -50,6 +42,9 @@
         {"id":"05586100",
          "name":"IllinoisQ",
          "start":"2012-06-02"}
-    ]
-}
+    ],
 
+    "services" :
+        ["iv","qv","qwdata","site"]
+
+}
