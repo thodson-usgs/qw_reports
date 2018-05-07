@@ -13,7 +13,8 @@
 
         {"id":"03381495",
          "name":"LittleWabash",
-         "start":"2015-11-01"},
+         "start":"2015-11-01",
+         "proxy":"03381500"},
 
         {"id":"05446500",
          "name":"Rock",
@@ -25,7 +26,8 @@
 
         {"id":"05586300",
          "name":"Illinois",
-         "start":"2012-06-02"},
+         "start":"2012-06-02",
+         "proxy":"05586100"},
 
         {"id":"05595000",
          "name":"Kaskaskia",
@@ -34,10 +36,6 @@
         {"id":"05599490",
          "name":"BigMuddy",
          "start":"2015-10-01"},
-
-        {"id": "03381500",
-         "name":"LittleWabashQ",
-         "start":"2015-11-01"},
 
         {"id":"05586100",
          "name":"IllinoisQ",
