@@ -5,7 +5,11 @@ from hygnd.munge import fill_iv_w_dv, filter_param_cd, interp_to_freq, update_me
 #import table to lookup field names
 from qw_reports.codes import pn
 
-class SaidProject(NWISStore):
+class SAIDProject(NWISStore):
+    """Rename to ModelProject
+    """
+    def get_surrogatemodel(self, site_id):
+        return SurrogateModel(site_id, self._path)
 
 
     def stage_sites(self,project_template):
@@ -18,48 +22,35 @@ class SaidProject(NWISStore):
         self.template = Project(project_template)
 
         for site in self.template.sites:
-            station = self.get_station(site['id'])
+            station_id = site['id']
             proxy_id = site.get('proxy')
 
-            if proxy_id:
-                proxy = self.get_station(proxy_id)
-
-            else:
-                proxy = None
-
-            station = SaidStation(station, proxy)
-            station.stage()
+            model = self.get_surrogatemodel(station_id)
+            model.stage(proxy_id)
 
 
     def cleanup(self):
-        """Delete said files
+        """Delete said filesan
         """
         pass
 
+class SurrogateModel(Table):
+    """
+    XXX Note this is not a  table
+    """
+    def __init__(self, site_id, store_path):
+        super().__init__(site_id, store_path, 'said')
 
-class SaidStation(Table):
-
-    def __init__(self, Station, Proxy=None):
-        """Fills data in with station first, then proxy
-        """
-        self._id = Station.id()
-        self._store_path = Station.store_path
-        self._root = 'said'
-        self.station = Station
-        self.proxy = Proxy
-
-
-
-    def stage(self, verbose=True):
+    def stage(self, proxy_id=None, verbose=True):
         """Prepare and store dataframes for input to SAID
         """
         if verbose:
             print(self._id)
 
 
-        iv = self._apply_proxy('iv')
-        dv = self._apply_proxy('dv')
-        qwdata = self._apply_proxy('qwdata')
+        iv = self._apply_proxy('iv', proxy_id)
+        dv = self._apply_proxy('dv', proxy_id)
+        qwdata = self._apply_proxy('qwdata', proxy_id)
 
 
         #clean iv
@@ -85,29 +76,43 @@ class SaidStation(Table):
         self.put('iv', iv)
         self.put('qwdata',qwdata)
 
-    def _apply_proxy(self, service):
+    def _apply_proxy(self, service, proxy_id):
         #import pdb; pdb.set_trace()
+        with NWISStore(self._store_path) as store:
 
-        if not self.proxy:
-            return self.station.get(service)
+            #import pdb; pdb.set_trace()
+            station = store.get_station(self.id())
+            #try::w
+
+            #    station = store.get_station(self.site_id)
+##
+            #except:
+            #    print('station not found')
+
+
+
+        if not proxy_id:
+            return station.get(service)
+
+        else:
+            proxy = store.get_station(proxy_id)
 
         # check if the station even has a service
         try:
-            df = self.station.get(service)
+            df = station.get(service)
 
         except:
-            return self.proxy.get(service)
+            return proxy.get(service)
 
         # if it does, check for the proxy
         try:
-            proxy_df = self.proxy.get(service)
+            proxy_df = proxy.get(service)
             #import pdb; pdb.set_trace()
             #return update_merge(df, proxy_df)
             return update_merge(df, proxy_df, na_only=True)
 
         except:
-            return self.station.get(service)
-
+            return station.get(service)
 
 
 #XXX these can be class methods

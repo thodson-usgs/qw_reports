@@ -13,7 +13,6 @@ import pandas as pd
 
 #XXX write out each import
 from qw_reports.plot import *
-from qw_reports.analysis.loads import phos_load, nitrate_load, ssc_load
 
 #MARK_SIZE = 3 # not used
 SUMMARY_COLS = ['model','# obs','adjusted r^2','p-value']
@@ -34,62 +33,6 @@ lbs2ton = 0.0005
 interval = 15 * min2sec
 
 FLUX_CONV = mg2lbs * l2cf * interval
-
-
-def mean_annual_report(project, store):
-    """
-    TODO
-    """
-    filename = 'reports/loads_{}.txt'.format(str(wy))
-
-    try:
-        sur_df = store.get('/site/{}/said/iv'.format(site['id']))
-        con_df = store.get('/site/{}/said/qwdata'.format(site['id']))
-
-    except KeyError:
-        print('site {} not found'.format(site['name']))
-
-    sur_data = DataManager(sur_df)
-    con_data = DataManager(con_df)
-
-    N = nitrate_load(wy, sur_data)
-    SSC = ssc_load(wy, con_data, sur_data)
-
-    p_model1, p_model2 = make_phos_model(con_data, sur_data)
-    TP = phos_load(wy, p_model1, p_model2)
-
-    with open(filename,'a') as f:
-        f.write('site: {}, Nitrate: {}, TP: {}, SSC: {}\n'.format(site['id'],
-                                                                  N,
-                                                                  TP,
-                                                                  SSC * lbs2ton))
-
-
-
-def load_report(wy,store, site):
-    filename = 'reports/loads_{}.txt'.format(str(wy))
-
-    try:
-        sur_df = store.get('/site/{}/said/iv'.format(site['id']))
-        con_df = store.get('/site/{}/said/qwdata'.format(site['id']))
-
-    except KeyError:
-        print('site {} not found'.format(site['name']))
-
-    sur_data = DataManager(sur_df)
-    con_data = DataManager(con_df)
-
-    N = nitrate_load(wy, sur_data)
-    SSC = ssc_load(wy, con_data, sur_data)
-
-    p_model1, p_model2 = make_phos_model(con_data, sur_data)
-    TP = phos_load(wy, p_model1, p_model2)
-
-    with open(filename,'a') as f:
-        f.write('site: {}, Nitrate: {}, TP: {}, SSC: {}\n'.format(site['id'],
-                                                                  N,
-                                                                  TP,
-                                                                  SSC * lbs2ton))
 
 
 

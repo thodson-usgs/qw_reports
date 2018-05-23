@@ -1,5 +1,6 @@
 #FLUX_CONV = 0.00269688566
-
+from qw_reports.reports import make_ssc_model
+from hygnd.munge import update_merge
 # Conversions
 mg2lbs = 2.20462e-6
 l2cf = 1/0.0353137
@@ -11,30 +12,53 @@ FLUX_CONV = mg2lbs * l2cf * interval
 
 SAMPLES_PER_YEAR = 15 * 24 * 365.25 #min * hours * days
 
+def wy_dates(year):
+    start = str(wy-1) + '-10-01'
+    end = str(wy) + '-09-30'
+    return start, end
+
 def load_ts(discharge, constituent, units='lbs'):
     """
     """
     df = discharge * constituent * FLUX_CONV
 
-    if units = 'tons':
+    if units == 'tons':
         df = df * lbs2ton
 
     return df
 
-def mean_annual_load(discharge, constituent, units='lbs'):
-    """
-    Assumes a 15 minute interval
+def mean_annual_load(discharge, constituent, units='lbs', wy=None):
+    """Calculate the mean annual load
+
+    Assumes a 15-minute interval.
+
+    Parameters
+    ----------
+    discharge : DataFrame
+    constituent : DataFrame
+    wy : string
+        Water year in which to calculate load. If None, calculates mean annual
+        load of entire record.
     """
     flux = load_ts(discharge, constituent, units)
-    mean_15m_flux = flux.mean()
 
+    if wy:
+        start, end = wy_dates(wy)
+        flux = flux.loc[start,end]
+
+    mean_15m_flux = flux.mean()
     return mean_15m_flux * SAMPLES_PER_YEAR
 
-def wy_load(wy, discharge, constituent, units='lbs'):
+
+def annual_load(wy, discharge, constituent, units='lbs'):
+    """ Calculate the measured annual load.
+
+    Parameters
+    ----------
+    discharge : DataFrame
+    constituent : DataFrame
     """
-    """
-    start = str(wy-1) + '-10-01'
-    end   = str(wy) + '-09-30'
+    start, end = wy_dates(wy)
 
     flux = load_ts(discharge, constituent, units)
     return flux.loc[start:end].sum()
@@ -73,11 +97,11 @@ def phos_load(model1, model2, wy=None):
     discharge = df['Discharge']
     constituent = predicted_data_1['TP']
 
-    if wy:
-        return wy_load(wy, discharge, constituent)
-
-    else:
-        return mean_annual_load(discharge, constituent)
+    #if wy:
+    #    return wy_load(wy, discharge, constituent)
+    #
+    #else:
+    return mean_annual_load(discharge, constituent, wy=wy)
 
 
 def nitrate_load(sur_data, wy=None):
@@ -85,11 +109,7 @@ def nitrate_load(sur_data, wy=None):
     discharge = df['Discharge']
     constituent = df['NitrateSurr']
 
-    if wy:
-        return wy_load(wy, discharge, constituent)
-
-    else:
-        return mean_annual_load(discharge, constituent)
+    return mean_annual_load(discharge, constituent, wy=wy)
 
 
 def ssc_load(con_data, sur_data, wy=None):
@@ -106,8 +126,4 @@ def ssc_load(con_data, sur_data, wy=None):
     discharge = df.Discharge
     constituent = predicted_data['SSC']
 
-    if wy:
-        return wy_load(wy, discharge, constituent, units='tons')
-
-    else:
-        return mean_annual_load(discharge, constituent, units='tons')
+    return mean_annual_load(discharge, constituent, wy=wy)

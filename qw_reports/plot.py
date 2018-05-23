@@ -17,6 +17,13 @@ MODEL_FIGSIZE = (7.5,9)
 
 LOAD_FACTOR = 0.00269688566 #XXX check this, 
 
+MARKER_SIZE = 3
+
+mpl.rcParams['lines.markeredgewidth'] = 0.5
+mpl.rcParams['lines.markersize'] = MARKER_SIZE
+mpl.rcParams['lines.linewidth'] = 1
+mpl.rcParams['font.size'] = 8
+
 
 def plot_ssc(rating_model, filename=None, return_model=False, title=None):
     """ Generate plots of discharge, predicted SSC, and sediment load.
@@ -54,8 +61,8 @@ def plot_ssc(rating_model, filename=None, return_model=False, title=None):
     ax2.yaxis.set_label_position("right")
 
     ax1.set_ylabel('Streamflow (cfs)')
-    ax2.set_ylabel('Sediment (mg/L)')
-    ax3.set_ylabel('Sediment (tons/day')
+    ax2.set_ylabel('SSC (mg/L)')
+    ax3.set_ylabel('Sediment load (tons/day)')
 
     #set grid
     for ax in (ax1, ax2, ax3):
@@ -96,7 +103,8 @@ def plot_nitrate(con_data, sur_data, filename=None, title=None):
 
     ax1.plot(df.index, df.Discharge, color='cornflowerblue', label='Discharge')
     ax2.plot(df.index,df.NitrateSurr, color='green', label='Nitrate probe observation')
-    ax2.plot(df2.index,df2.Nitrate, marker='o', markerfacecolor='yellow', linewidth=0, label='Nitrate sample', ms=4)
+    ax2.plot(df2.index,df2.Nitrate, marker='o', markerfacecolor='Yellow',
+             markeredgecolor='black', linewidth=0, label='Sample') 
 
     #error is the greater of 0.5mg/L or 10% of the measurement 
     n_error = np.maximum(0.5, df['NitrateSurr']*.1)
@@ -265,31 +273,42 @@ def plot_load_ts(data, discharge, response_var, ax, color='black'):
     ax.plot(data.index, load, color=color)
 
 
-def plot_predicted_ts(data, obs, response_var, ax, color='blue'):
+def plot_predicted_ts(data, obs, response_var, ax, color='blue',
+                     missing=False, excluded=False, legend=False):
     """
     """
     L90 = '{}_L90.0'.format(response_var)
     U90 = '{}_U90.0'.format(response_var)
     #obs = rating_model.get_model_dataset()
 
-    ax.plot(data.index, data[response_var], color=color,
-            label='Predicted {}'.format(response_var))
+    ax.plot(data.index, data[response_var], color=color)
+            #,label='Predicted {}'.format(response_var))
 
     ax.fill_between(data.index, data[L90], data[U90], facecolor='gray',
                     edgecolor='gray', alpha=0.5, #interpolate=True,
                     label='90% Prediction Interval')
 
-    #get observations
-    included = obs[~obs['Missing'] & ~obs['Excluded']][response_var]
-    missing  = obs[obs['Missing']][response_var]
-    #con_obs = model_dataset[response_var]
+    #plot included observations
 
-    ax.plot(missing.index, missing.values, marker='o', label='Missing',
-            markeredgecolor='black', markerfacecolor='None', linestyle='None',ms=4)
-    ax.plot(included.index, included.values, marker='o', label='Included',
-            markerfacecolor='yellow', markeredgecolor='black',linestyle='None',ms=4)
+    if missing:
+        missing  = obs[obs['Missing']][response_var]
+        included = obs[~obs['Missing'] & ~obs['Excluded']][response_var]
+        ax.plot(missing.index, missing.values, marker='o', label='Missing',
+                markeredgecolor='black', markerfacecolor='None', linestyle='None')
 
-    ax.legend(loc='best')
+        ax.plot(included.index, included.values, marker='o', label='Included',
+            markerfacecolor='Yellow', markeredgecolor='black', linestyle='None')
+
+
+    else:
+        included = obs[~obs['Excluded']][response_var]
+
+    ax.plot(included.index, included.values, marker='o', label='Sample',
+            markerfacecolor='Yellow', markeredgecolor='black', linestyle='None')
+
+
+    if legend:
+        ax.legend(loc='best')
     #ax.set_ylabel('TP')
 
 def plot_phos(model1, model2, filename=None, title=None):
