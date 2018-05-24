@@ -34,8 +34,6 @@ interval = 15 * min2sec
 
 FLUX_CONV = mg2lbs * l2cf * interval
 
-
-
 def gen_report(store, site):
     """Generates a plots and model data for a given site
     """

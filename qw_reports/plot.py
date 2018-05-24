@@ -23,7 +23,7 @@ mpl.rcParams['lines.markeredgewidth'] = 0.5
 mpl.rcParams['lines.markersize'] = MARKER_SIZE
 mpl.rcParams['lines.linewidth'] = 1
 mpl.rcParams['font.size'] = 8
-
+mpl.rcParams.update({'font.size':8})
 
 def plot_ssc(rating_model, filename=None, return_model=False, title=None):
     """ Generate plots of discharge, predicted SSC, and sediment load.
@@ -89,7 +89,7 @@ def plot_ssc(rating_model, filename=None, return_model=False, title=None):
         return rating_model
 
 
-def plot_nitrate(con_data, sur_data, filename=None, title=None):
+def plot_nitrate(con_data, sur_data, filename=None, title=None, legend=False):
     """
     Note: this function should use a regression, based on the error of current nitrate sensors
     Args:
@@ -151,7 +151,8 @@ def plot_nitrate(con_data, sur_data, filename=None, title=None):
     #ax3.get_yaxis().set_label_coords(-.05, .5)
 
     #create legend(s), set figure size, save figure
-    ax2.legend(loc='best', numpoints=1)
+    if legend:
+        ax2.legend(loc='best', numpoints=1)
     #fig.set_size_inches(15,10)
     fig.autofmt_xdate()
 
@@ -281,8 +282,8 @@ def plot_predicted_ts(data, obs, response_var, ax, color='blue',
     U90 = '{}_U90.0'.format(response_var)
     #obs = rating_model.get_model_dataset()
 
-    ax.plot(data.index, data[response_var], color=color)
-            #,label='Predicted {}'.format(response_var))
+    ax.plot(data.index, data[response_var], color=color,
+            label='Predicted {}'.format(response_var))
 
     ax.fill_between(data.index, data[L90], data[U90], facecolor='gray',
                     edgecolor='gray', alpha=0.5, #interpolate=True,

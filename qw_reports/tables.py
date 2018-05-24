@@ -41,24 +41,29 @@ class LoadTable(ReportTable):
         """
 
         if water_years:
-            water_years.append('mean')
-            column_names = [self.columns, water_years]
+            water_year_columns = water_years + ['mean']
+            #water_years.append('mean')
+            column_names = [self.columns, water_year_columns]
             columns = pd.MultiIndex.from_product(column_names)
 
         else:
             columns = self.columns
 
-        data = pd.DataFrame(data=None, columns=self.columns)
+        data = pd.DataFrame(data=None, columns=columns)
 
         for site in self.template.sites:
 
             if water_years:
-                entry = pd.Series(index=self.columns, name=site['id'])
+                entry = pd.Series(index=columns, name=site['id'])
                 # Not working yet
                 for year in water_years:
-                    annual_entry = self.calculate_site_load(site['id'])
+                    annual_entry = self.calculate_site_load(site['id'], wy=year)
                     for constituent in annual_entry.index:
                         entry.loc[constituent, year] = annual_entry.loc[constituent]
+
+                mean_entry = self.calculate_site_load(site['id'])
+                for constituent in mean_entry.index:
+                    entry.loc[constituent, 'mean'] = mean_entry.loc[constituent]
 
             else:
                 entry = self.calculate_site_load(site['id'])

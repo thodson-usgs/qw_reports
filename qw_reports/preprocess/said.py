@@ -11,7 +11,6 @@ class SAIDProject(NWISStore):
     def get_surrogatemodel(self, site_id):
         return SurrogateModel(site_id, self._path)
 
-
     def stage_sites(self,project_template):
         """
         Args:
@@ -51,7 +50,6 @@ class SurrogateModel(Table):
         iv = self._apply_proxy('iv', proxy_id)
         dv = self._apply_proxy('dv', proxy_id)
         qwdata = self._apply_proxy('qwdata', proxy_id)
-
 
         #clean iv
         iv = iv.replace('P,e','A').replace('P:e','A')
@@ -107,13 +105,12 @@ class SurrogateModel(Table):
         # if it does, check for the proxy
         try:
             proxy_df = proxy.get(service)
-            #import pdb; pdb.set_trace()
+           #import pdb; pdb.set_trace()
             #return update_merge(df, proxy_df)
             return update_merge(df, proxy_df, na_only=True)
 
         except:
             return station.get(service)
-
 
 #XXX these can be class methods
 def format_constituent_df(df):

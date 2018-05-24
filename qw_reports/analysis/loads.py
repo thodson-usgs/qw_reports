@@ -10,11 +10,11 @@ interval = 15 * min2sec
 
 FLUX_CONV = mg2lbs * l2cf * interval
 
-SAMPLES_PER_YEAR = 15 * 24 * 365.25 #min * hours * days
+SAMPLES_PER_YEAR = 4 * 24 * 365.25 #samples per hour * hours * days
 
 def wy_dates(year):
-    start = str(wy-1) + '-10-01'
-    end = str(wy) + '-09-30'
+    start = str(year-1) + '-10-01'
+    end = str(year) + '-09-30'
     return start, end
 
 def load_ts(discharge, constituent, units='lbs'):
@@ -44,7 +44,7 @@ def mean_annual_load(discharge, constituent, units='lbs', wy=None):
 
     if wy:
         start, end = wy_dates(wy)
-        flux = flux.loc[start,end]
+        flux = flux.loc[start:end]
 
     mean_15m_flux = flux.mean()
     return mean_15m_flux * SAMPLES_PER_YEAR
@@ -59,7 +59,6 @@ def annual_load(wy, discharge, constituent, units='lbs'):
     constituent : DataFrame
     """
     start, end = wy_dates(wy)
-
     flux = load_ts(discharge, constituent, units)
     return flux.loc[start:end].sum()
 
@@ -103,14 +102,12 @@ def phos_load(model1, model2, wy=None):
     #else:
     return mean_annual_load(discharge, constituent, wy=wy)
 
-
 def nitrate_load(sur_data, wy=None):
     df = sur_data.get_data()
     discharge = df['Discharge']
     constituent = df['NitrateSurr']
 
     return mean_annual_load(discharge, constituent, wy=wy)
-
 
 def ssc_load(con_data, sur_data, wy=None):
     """calc ssc load for water year
