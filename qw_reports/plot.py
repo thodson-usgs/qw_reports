@@ -275,7 +275,8 @@ def plot_load_ts(data, discharge, response_var, ax, color='black'):
 
 
 def plot_predicted_ts(data, obs, response_var, ax, color='blue',
-                     missing=False, excluded=False, legend=False):
+                     missing=False, excluded=False, legend=False,
+                     highlight_gaps=False):
     """
     """
     L90 = '{}_L90.0'.format(response_var)
@@ -288,6 +289,13 @@ def plot_predicted_ts(data, obs, response_var, ax, color='blue',
     ax.fill_between(data.index, data[L90], data[U90], facecolor='gray',
                     edgecolor='gray', alpha=0.5, #interpolate=True,
                     label='90% Prediction Interval')
+    ylim = ax.get_ylim()
+
+    if highlight_gaps:
+        ax.fill_between(data.index, ylim[0], ylim[1],
+                        where= data[response_var].isna(),
+                        facecolor='red', alpha=0.1)
+
 
     #plot included observations
 

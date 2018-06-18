@@ -1,4 +1,4 @@
-from hygnd.store import Station, HGStore, Table, NWISStore
+from hygnd.store import Station, HGStore, Collection, NWISStore
 from hygnd.project import Project
 from hygnd.munge import fill_iv_w_dv, filter_param_cd, interp_to_freq, update_merge, update_merge
 
@@ -33,7 +33,7 @@ class SAIDProject(NWISStore):
         """
         pass
 
-class SurrogateModel(Table):
+class SurrogateModel(Collection):
     """
     XXX Note this is not a  table
     """
@@ -52,20 +52,23 @@ class SurrogateModel(Table):
         qwdata = self._apply_proxy('qwdata', proxy_id)
 
         #clean iv
+        #XXX remove this
         iv = iv.replace('P,e','A').replace('P:e','A')
 
         iv = filter_param_cd(iv, 'A')#.replace(-999999, np.NaN)
         dv = filter_param_cd(dv, 'A')#.replace(-999999, np.NaN)
 
-        iv = interp_to_freq(iv, freq=15, interp_limit=120)
+        if not iv.empty:
 
-        if '00060' in iv.columns:
-            iv = fill_iv_w_dv(iv, dv, freq='15min', col='00060')
+            iv = interp_to_freq(iv, freq=15, interp_limit=120)
 
-        #interpolate the OrthoPhosphate down to 15min intervals
-        if '51289' in iv.columns:
-            iv['51289'] = interp_to_freq(iv['51289'], freq=15,
-                                        interp_limit=480)
+            if '00060' in dv.columns:
+                iv = fill_iv_w_dv(iv, dv, freq='15min', col='00060')
+
+            #interpolate the OrthoPhosphate down to 15min intervals
+            if '51289' in iv.columns:
+                iv['51289'] = interp_to_freq(iv['51289'], freq=15,
+                                            interp_limit=480)
 
         iv = format_surrogate_df(iv)
         qwdata = format_constituent_df(qwdata)
