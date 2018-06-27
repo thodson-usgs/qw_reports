@@ -11,7 +11,8 @@ class SAIDProject(NWISStore):
     def get_surrogatemodel(self, site_id):
         return SurrogateModel(site_id, self._path)
 
-    def stage_sites(self,project_template):
+    def stage_sites(self,project_template,
+                    approved_only=True):
         """
         Args:
             sites (list): list of dicts, each containing an id field
@@ -25,7 +26,7 @@ class SAIDProject(NWISStore):
             proxy_id = site.get('proxy')
 
             model = self.get_surrogatemodel(station_id)
-            model.stage(proxy_id)
+            model.stage(proxy_id, approved_only)
 
 
     def cleanup(self):
@@ -40,7 +41,8 @@ class SurrogateModel(Collection):
     def __init__(self, site_id, store_path):
         super().__init__(site_id, store_path, 'said')
 
-    def stage(self, proxy_id=None, verbose=True):
+    def stage(self, proxy_id=None, verbose=True,
+              approved_only=True):
         """Prepare and store dataframes for input to SAID
         """
         if verbose:
@@ -53,10 +55,10 @@ class SurrogateModel(Collection):
 
         #clean iv
         #XXX remove this
-        iv = iv.replace('P,e','A').replace('P:e','A')
-
-        iv = filter_param_cd(iv, 'A')#.replace(-999999, np.NaN)
-        dv = filter_param_cd(dv, 'A')#.replace(-999999, np.NaN)
+        if approved_only == True:
+            #iv = iv.replace('P,e','A').replace('P:e','A')
+            iv = filter_param_cd(iv, 'A')#.replace(-999999, np.NaN)
+            dv = filter_param_cd(dv, 'A')#.replace(-999999, np.NaN)
 
         if not iv.empty:
 

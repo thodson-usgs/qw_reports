@@ -123,4 +123,4 @@ def ssc_load(con_data, sur_data, wy=None):
     discharge = df.Discharge
     constituent = predicted_data['SSC']
 
-    return mean_annual_load(discharge, constituent, wy=wy)
+    return mean_annual_load(discharge, constituent, units='tons', wy=wy)

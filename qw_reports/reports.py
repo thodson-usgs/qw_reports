@@ -33,6 +33,10 @@ lbs2ton = 0.0005
 interval = 15 * min2sec
 
 FLUX_CONV = mg2lbs * l2cf * interval
+def get_time_limit(df1, df2):
+    start = min(df1.dropna(how='all').index[0], df2.dropna(how='all').index[0])
+    end = max(df1.dropna(how='all').index[-1], df2.dropna(how='all').index[-1])
+    return start, end
 
 def gen_report(store, site):
     """Generates a plots and model data for a given site
@@ -49,11 +53,16 @@ def gen_report(store, site):
 
     summary_table = pd.DataFrame(columns=SUMMARY_COLS)
 
-    plot_nitrate(con_data, sur_data, filename='plots/{}_nitrate.png'.format(site['name']))
+    #determine start and end for plots
+    start_date, end_date = get_time_limit(sur_df, con_df)
+
+    plot_nitrate(con_data, sur_data, filename='plots/{}_nitrate.png'.format(site['name']),
+                start_date=start_date, end_date=end_date)
 
     ssc_model = make_ssc_model(con_data, sur_data)
 
-    plot_ssc(ssc_model, filename='plots/{}_ssc.png'.format(site['name']))
+    plot_ssc(ssc_model, filename='plots/{}_ssc.png'.format(site['name']),
+             start_date=start_date, end_date=end_date)
 
     #append the model results to summary
     summary_table= summary_table.append(model_row_summary(ssc_model))
@@ -91,7 +100,8 @@ def gen_report(store, site):
 
     plot_model(ssc_model, filename='plots/{}_ssc_model.png'.format(site['name']))
 
-    plot_phos(p_model1, p_model2, filename='plots/{}_tp.png'.format(site['name']))
+    plot_phos(p_model1, p_model2, filename='plots/{}_tp.png'.format(site['name']),
+              start_date=start_date, end_date=end_date)
 
     plot_model(p_model1, filename='plots/{}_orthoP_model.png'.format(site['name']))
     #

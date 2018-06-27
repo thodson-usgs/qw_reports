@@ -25,7 +25,9 @@ mpl.rcParams['lines.linewidth'] = 1
 mpl.rcParams['font.size'] = 8
 mpl.rcParams.update({'font.size':8})
 
-def plot_ssc(rating_model, filename=None, return_model=False, title=None):
+def plot_ssc(rating_model, filename=None, return_model=False, title=None,
+             start_date=None,
+             end_date=None):
     """ Generate plots of discharge, predicted SSC, and sediment load.
 
     Args:
@@ -68,10 +70,9 @@ def plot_ssc(rating_model, filename=None, return_model=False, title=None):
     for ax in (ax1, ax2, ax3):
         ax.grid(which='major',axis='x',linestyle='--')
         #/ax.xaxis.grid() # vertical lines
+        ax.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+        ax.set_xlim([start_date, end_date])
 
-    ax1.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
-    ax2.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
-    ax3.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
     fig.autofmt_xdate()
 
     if title:
@@ -89,7 +90,8 @@ def plot_ssc(rating_model, filename=None, return_model=False, title=None):
         return rating_model
 
 
-def plot_nitrate(con_data, sur_data, filename=None, title=None, legend=False):
+def plot_nitrate(con_data, sur_data, filename=None, title=None, legend=False,
+                 start_date=None, end_date=None):
     """
     Note: this function should use a regression, based on the error of current nitrate sensors
     Args:
@@ -138,6 +140,7 @@ def plot_nitrate(con_data, sur_data, filename=None, title=None, legend=False):
     #set grid
     for ax in (ax1, ax2, ax3):
         ax.grid(which='major',axis='x',linestyle='--')
+        ax.set_xlim([start_date, end_date])
 
     #format y-axis tick labels to include commas for thousands
     ax1.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
@@ -320,7 +323,8 @@ def plot_predicted_ts(data, obs, response_var, ax, color='blue',
         ax.legend(loc='best')
     #ax.set_ylabel('TP')
 
-def plot_phos(model1, model2, filename=None, title=None):
+def plot_phos(model1, model2, filename=None, title=None,
+             start_date=None, end_date=None):
 
     #df = sur_data.get_data()
     #df3 = rating_model_2.get_model_dataset()
@@ -381,6 +385,7 @@ def plot_phos(model1, model2, filename=None, title=None):
     #set grid
     for ax in (ax1, ax2, ax3):
         ax.grid(which='major',axis='x',linestyle='--')
+        ax.set_xlim([start_date, end_date])
 
     ax1.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
     ax3.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
