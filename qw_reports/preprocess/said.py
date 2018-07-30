@@ -1,3 +1,5 @@
+import numpy as np
+
 from hygnd.store import Station, HGStore, Collection, NWISStore
 from hygnd.project import Project
 from hygnd.munge import fill_iv_w_dv, filter_param_cd, interp_to_freq, update_merge, update_merge
@@ -26,7 +28,7 @@ class SAIDProject(NWISStore):
             proxy_id = site.get('proxy')
 
             model = self.get_surrogatemodel(station_id)
-            model.stage(proxy_id, approved_only)
+            model.stage(proxy_id, approved_only=approved_only)
 
 
     def cleanup(self):
@@ -54,6 +56,8 @@ class SurrogateModel(Collection):
         qwdata = self._apply_proxy('qwdata', proxy_id)
 
         #clean iv
+        iv = iv.replace(-999999, np.NaN)
+        dv = dv.replace(-999999, np.NaN)
         #XXX remove this
         if approved_only == True:
             #iv = iv.replace('P,e','A').replace('P:e','A')
@@ -61,7 +65,7 @@ class SurrogateModel(Collection):
             dv = filter_param_cd(dv, 'A')#.replace(-999999, np.NaN)
 
         if not iv.empty:
-
+            iv = iv.drop_duplicates()
             iv = interp_to_freq(iv, freq=15, interp_limit=120)
 
             if '00060' in dv.columns:
