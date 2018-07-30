@@ -56,8 +56,21 @@ def gen_report(store, site):
     #determine start and end for plots
     start_date, end_date = get_time_limit(sur_df, con_df)
 
+    #update start and end according to user
+    user_start = site.get('start')
+    user_end   = site.get('end')
+
+    if user_start:
+        start_date = pd.to_datetime(user_start)
+
+    if user_end:
+        end_date = pd.to_datetime(user_end)
+
     plot_nitrate(con_data, sur_data, filename='plots/{}_nitrate.png'.format(site['name']),
                 start_date=start_date, end_date=end_date)
+
+    plot_p(con_data, sur_data, filename='plots/{}_orthop.png'.format(site['name']),
+           start_date=start_date, end_date=end_date)
 
     ssc_model = make_ssc_model(con_data, sur_data)
 

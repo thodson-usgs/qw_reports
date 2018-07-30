@@ -48,7 +48,7 @@ class SurrogateModel(Collection):
     def stage(self, proxy_id=None,
               verbose=True,
               start=None,
-              stop=None,
+              end=None,
               approved_only=True):
         """Prepare and store dataframes for input to SAID
         """
@@ -72,7 +72,7 @@ class SurrogateModel(Collection):
         if not iv.empty:
             # clip data to time interval
             for df in iv, dv, qwdata:
-                df = df[start:stop]
+                df = df[start:end]
 
             iv = iv.drop_duplicates()
             iv = interp_to_freq(iv, freq=15, interp_limit=120)
@@ -133,7 +133,7 @@ class SurrogateModel(Collection):
 
 #XXX these can be class methods
 def format_constituent_df(df):
-    check_params = ['p00665','p80154','p00631','p70331']
+    check_params = ['p00665','p00671','p80154','p00631','p70331']
     con_params = []
     for i in check_params:
         if i in df.columns:
@@ -144,7 +144,7 @@ def format_constituent_df(df):
     return out_df.rename(columns=out_cols)
 
 #duplicates previous function
-def fmormat_surrogate_df(df):
+def format_surrogate_df(df):
     check_params = ['00060','00095','63680_ysi','63680_hach','99133', '51289']
     sur_params = []
     for i in check_params:

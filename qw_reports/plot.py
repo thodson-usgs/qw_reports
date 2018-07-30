@@ -89,6 +89,64 @@ def plot_ssc(rating_model, filename=None, return_model=False, title=None,
     if return_model:
         return rating_model
 
+def plot_dp(con_data, sur_data, filename=None, title=None,
+           legend=None,
+           start_date=None,
+           end_date=None):
+
+    df2 = con_data.get_data()
+    df = sur_data.get_data()
+    fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=True, figsize=HP_FIGSIZE, dpi=DPI)
+    fig.subplots_adjust(hspace=0)
+
+    ax1.plot(df.index, df.Discharge, color='cornflowerblue', label='Discharge')
+    ax2.plot(df.index,df.OrthoP, color='maroon', label='In-situ PO_4-P')
+    ax2.plot(df2.index,df2.OrthoP, marker='o', markerfacecolor='Yellow',
+             markeredgecolor='black', linewidth=0, label='Sample')
+
+    plot_load_ts(df, df.Discharge, 'OrthoP', ax=ax3)
+    format_load_plot(fig, 'DP (mg/L-P)', 'DP (tons/day)',
+                     start_date=start_date,
+                     end_date=end_date,
+                     title=title, legend=legend, filename=filename)
+
+def format_load_plot(fig,
+                     concentration_label,
+                     load_label,
+                     start_date=None,
+                     end_date=None,
+                     title=None, legend=False, filename=None):
+    if title:
+        fig.suptitle(title)
+    #set labels
+    ax1, ax2, ax3 = fig.axes
+    ax2.yaxis.tick_right()
+    ax2.yaxis.set_label_position('right')
+    ax1.set_ylabel('Streamflow (cfs)')
+    ax2.set_ylabel(concentration_label)
+    ax3.set_ylabel(load_label)
+
+    #set grid
+    for ax in fig.axes:
+        ax.grid(which='major',axis='x',linestyle='--')
+        ax.set_xlim([start_date, end_date])
+
+    #format y-axis tick labels to include commas for thousands
+    ax1.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+    ax2.yaxis.set_major_formatter(tkr.FormatStrFormatter('%.1f'))
+    ax3.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+
+
+    #create legend(s), set figure size, save figure
+    if legend:
+        ax2.legend(loc='best', numpoints=1)
+    #fig.set_size_inches(15,10)
+    fig.autofmt_xdate()
+
+    if filename:
+        plt.savefig(filename, bbox_inches = 'tight')
+
+
 
 def plot_nitrate(con_data, sur_data, filename=None, title=None, legend=False,
                  start_date=None, end_date=None):
@@ -128,42 +186,46 @@ def plot_nitrate(con_data, sur_data, filename=None, title=None, legend=False,
                     edgecolor='gray', alpha=0.5, #interpolate=True,
                     label='90% Prediction Interval')
 
-    if title:
-        fig.suptitle(title)
-    #set labels
-    ax2.yaxis.tick_right()
-    ax2.yaxis.set_label_position('right')
-    ax1.set_ylabel('Streamflow (cfs)')
-    ax2.set_ylabel('Nitrate (mg/L-N)')
-    ax3.set_ylabel('Nitrate (tons/day)')
+    format_load_plot(fig, 'Nitrate (mg/L-N)', 'Nitrate (tons/day)',
+                     start_date=start_date, end_date=end_date,
+                     title=title, legend=legend, filename=filename)
 
-    #set grid
-    for ax in (ax1, ax2, ax3):
-        ax.grid(which='major',axis='x',linestyle='--')
-        ax.set_xlim([start_date, end_date])
-
-    #format y-axis tick labels to include commas for thousands
-    ax1.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
-    ax2.yaxis.set_major_formatter(tkr.FormatStrFormatter('%.1f'))
-    ax3.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
-
-
-    #align yaxis labels
-    #ax1.get_yaxis().set_label_coords(-.05, .5)
-    #ax2.get_yaxis().set_label_coords(-.05, .5)
-    #ax3.get_yaxis().set_label_coords(-.05, .5)
-
-    #create legend(s), set figure size, save figure
-    if legend:
-        ax2.legend(loc='best', numpoints=1)
-    #fig.set_size_inches(15,10)
-    fig.autofmt_xdate()
-
-    if filename:
-
-        plt.savefig(filename, bbox_inches = 'tight')
-
-
+#    if title:
+#        fig.suptitle(title)
+#    #set labels
+#    ax2.yaxis.tick_right()
+#    ax2.yaxis.set_label_position('right')
+#    ax1.set_ylabel('Streamflow (cfs)')
+#    ax2.set_ylabel('Nitrate (mg/L-N)')
+#    ax3.set_ylabel('Nitrate (tons/day)')
+#
+#    #set grid
+#    for ax in (ax1, ax2, ax3):
+#        ax.grid(which='major',axis='x',linestyle='--')
+#        ax.set_xlim([start_date, end_date])
+#
+#    #format y-axis tick labels to include commas for thousands
+#    ax1.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+#    ax2.yaxis.set_major_formatter(tkr.FormatStrFormatter('%.1f'))
+#    ax3.get_yaxis().set_major_formatter(tkr.FuncFormatter(lambda x, p: format(int(x),',')))
+#
+#
+#    #align yaxis labels
+#    #ax1.get_yaxis().set_label_coords(-.05, .5)
+#    #ax2.get_yaxis().set_label_coords(-.05, .5)
+#    #ax3.get_yaxis().set_label_coords(-.05, .5)
+#
+#    #create legend(s), set figure size, save figure
+#    if legend:
+#        ax2.legend(loc='best', numpoints=1)
+#    #fig.set_size_inches(15,10)
+#    fig.autofmt_xdate()
+#
+#    if filename:
+#
+#        plt.savefig(filename, bbox_inches = 'tight')
+#
+#
 def plot_model_ts(model, filename=None, title=None, color='blue',
                  constituent_name=None, units='mg/L'):
     """ Generate plots of discharge, predicted concentration and predicted load.
