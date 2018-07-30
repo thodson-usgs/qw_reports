@@ -26,9 +26,11 @@ class SAIDProject(NWISStore):
         for site in self.template.sites:
             station_id = site['id']
             proxy_id = site.get('proxy')
+            start = site.get('start')
+            end = site.get('end')
 
             model = self.get_surrogatemodel(station_id)
-            model.stage(proxy_id, approved_only=approved_only)
+            model.stage(proxy_id, start=start, end=end, approved_only=approved_only)
 
 
     def cleanup(self):
@@ -43,7 +45,10 @@ class SurrogateModel(Collection):
     def __init__(self, site_id, store_path):
         super().__init__(site_id, store_path, 'said')
 
-    def stage(self, proxy_id=None, verbose=True,
+    def stage(self, proxy_id=None,
+              verbose=True,
+              start=None,
+              stop=None,
               approved_only=True):
         """Prepare and store dataframes for input to SAID
         """
@@ -58,20 +63,25 @@ class SurrogateModel(Collection):
         #clean iv
         iv = iv.replace(-999999, np.NaN)
         dv = dv.replace(-999999, np.NaN)
-        #XXX remove this
+
         if approved_only == True:
             #iv = iv.replace('P,e','A').replace('P:e','A')
             iv = filter_param_cd(iv, 'A')#.replace(-999999, np.NaN)
             dv = filter_param_cd(dv, 'A')#.replace(-999999, np.NaN)
 
         if not iv.empty:
+            # clip data to time interval
+            for df in iv, dv, qwdata:
+                df = df[start:stop]
+
             iv = iv.drop_duplicates()
             iv = interp_to_freq(iv, freq=15, interp_limit=120)
 
+            # fill in gaps in instantaneous discharge with daily estimates
             if '00060' in dv.columns:
                 iv = fill_iv_w_dv(iv, dv, freq='15min', col='00060')
 
-            #interpolate the OrthoPhosphate down to 15min intervals
+            # interpolate the OrthoPhosphate down to 15min intervals
             if '51289' in iv.columns:
                 iv['51289'] = interp_to_freq(iv['51289'], freq=15,
                                             interp_limit=480)
@@ -134,7 +144,7 @@ def format_constituent_df(df):
     return out_df.rename(columns=out_cols)
 
 #duplicates previous function
-def format_surrogate_df(df):
+def fmormat_surrogate_df(df):
     check_params = ['00060','00095','63680_ysi','63680_hach','99133', '51289']
     sur_params = []
     for i in check_params:
