@@ -13,6 +13,7 @@ import pandas as pd
 
 #XXX write out each import
 from qw_reports.plot import *
+from qw_reports.model import HierarchicalModel
 
 #MARK_SIZE = 3 # not used
 SUMMARY_COLS = ['model','# obs','adjusted r^2','p-value']
@@ -38,6 +39,57 @@ def get_time_limit(df1, df2):
     end = max(df1.dropna(how='all').index[-1], df2.dropna(how='all').index[-1])
     return start, end
 
+def update_table(store, path, df):
+    """
+    """
+    if path in store.keys():
+        old_df = store.get(path)
+        old_df = update_merge(old_df, df)
+        store.put(path, old_df)
+
+    else:
+        store.put(path, df)
+
+
+def process_nitrate(store, site):
+    """Process an in situ measurement like nitrate or orthoP
+    """
+    constituent = 'NitrateSurr'
+    db_path = '/said/{}/'.format(site['id'])
+    iv_path = db_path + 'iv'
+    df = store.get(iv_path)
+
+    n_error = np.maximum(0.5, df[constituent]*.1)
+    df[constituent+'_U90.0'] = df[constituent] + n_error
+    df['NitrateSurr_L90.0'] = df.NitrateSurr - n_error
+    #clip values below 0
+    df['NitrateSurr_L90.0'] = np.maximum(0, df['NitrateSurr_L90.0'])
+
+    update_table(store, iv_path, df)
+
+def run_model(store, site, model_list, constituent):
+    db_path = '/said/{}/'.format(site['id'])
+    iv_path = db_path + 'iv'
+    qwdata_path = db_path + 'qwdata'
+
+    try:
+        sur_df = store.get(iv_path)
+        con_df = store.get(qwdata_path)
+
+    except KeyError:
+        print('site {} not found'.format(site['name']))
+
+
+    model = HierarchicalModel(con_df, sur_df, model_list)
+
+    predictions = model.get_prediction()
+    sur_df = update_merge(sur_df, predictions)
+    store.put(iv_path, sur_df)
+
+    print(model.summary())
+    #summary.to_csv('report/{}_{}_summary.csv'.format(site['name'],constituent))
+
+
 def gen_report(store, site):
     """Generates a plots and model data for a given site
     """
@@ -48,8 +100,8 @@ def gen_report(store, site):
     except KeyError:
         print('site {} not found'.format(site['name']))
 
-    sur_data = DataManager(sur_df)
-    con_data = DataManager(con_df)
+    #sur_data = DataManager(sur_df)
+    #con_data = DataManager(con_df)
 
     summary_table = pd.DataFrame(columns=SUMMARY_COLS)
 
@@ -66,19 +118,12 @@ def gen_report(store, site):
     if user_end:
         end_date = pd.to_datetime(user_end)
 
-    plot_nitrate(con_data, sur_data, filename='plots/{}_nitrate.png'.format(site['name']),
-                start_date=start_date, end_date=end_date)
 
-    plot_p(con_data, sur_data, filename='plots/{}_orthop.png'.format(site['name']),
-           start_date=start_date, end_date=end_date)
-
-    ssc_model = make_ssc_model(con_data, sur_data)
-
-    plot_ssc(ssc_model, filename='plots/{}_ssc.png'.format(site['name']),
-             start_date=start_date, end_date=end_date)
+    #plot_ssc(ssc_model, filename='plots/{}_ssc.png'.format(site['name']),
+    #         start_date=start_date, end_date=end_date)
 
     #append the model results to summary
-    summary_table= summary_table.append(model_row_summary(ssc_model))
+    #summary_table= summary_table.append(model_row_summary(ssc_model))
 
     for directory in ['model_data','report']:
         try:
@@ -86,37 +131,46 @@ def gen_report(store, site):
         except:
             os.mkdir(directory)
 
-    #output model input data
-    df = ssc_model.get_model_dataset()
-    df.to_csv('model_data/{}_ssc.csv'.format(site['name']))
+    #process_nitrate(store, site)
 
-    #output prediction
+    pp_model_list = [
+        ['log(PP)',['log(Turb_HACH)']],
+        ['log(PP)',['log(Turb_YSI)']]
+    ]
+
+
+    run_model(store, site, pp_model_list, 'PP')
+
+    ssc_model_list = [
+        ['log(SSC)',['log(Turb_HACH)']],
+        ['log(SSC)',['log(Turb_YSI)']]
+    ]
+    run_model(store, site, ssc_model_list, 'SSC')
+
+    tp_model_list = [
+        ['log(TP)',['log(OrthoP)','log(Turb_HACH)']],
+        ['log(TP)',['log(OrthoP)','log(Turb_YSI)']],
+        ['log(TP)',['log(Turb_HACH)']],
+        ['log(TP)',['log(Turb_YSI)']]
+    ]
+    run_model(store, site, tp_model_list, 'TP')
 
     #write ssc model report
-    reportfile = 'report/{}_ssc_report.txt'.format(site['name'])
-    with open(reportfile, 'w') as f:
-        f.write(ssc_model.get_model_report().as_text())
-
-    p_model1, p_model2 = make_phos_model(con_data, sur_data)
-
-    #df_p1 = p_model1.get_model_dataset()
-    predicted_p = p_model1._model.predict_response_variable(explanatory_data=p_model1._surrogate_data,
-                                                            raw_response=True,
-                                                            bias_correction=True,
-                                                            prediction_interval=True)
-
-    predicted_p.to_csv('model_data/{}_tp.csv'.format(site['name']))
-
-    summary_table= summary_table.append(model_row_summary(p_model1))
-    summary_table= summary_table.append(model_row_summary(p_model2))
+    #reportfile = 'report/{}_ssc_report.txt'.format(site['name'])
+    #with open(reportfile, 'w') as f:
+    #    f.write(ssc_model.get_model_report().as_text())
 
 
-    plot_model(ssc_model, filename='plots/{}_ssc_model.png'.format(site['name']))
+    #summary_table= summary_table.append(model_row_summary(p_model1))
+    #summary_table= summary_table.append(model_row_summary(p_model2))
 
-    plot_phos(p_model1, p_model2, filename='plots/{}_tp.png'.format(site['name']),
-              start_date=start_date, end_date=end_date)
 
-    plot_model(p_model1, filename='plots/{}_orthoP_model.png'.format(site['name']))
+    #plot_model(ssc_model, filename='plots/{}_ssc_model.png'.format(site['name']))
+
+    #plot_phos(p_model1, p_model2, filename='plots/{}_tp.png'.format(site['name']),
+    #          start_date=start_date, end_date=end_date)
+
+    #plot_model(p_model1, filename='plots/{}_orthoP_model.png'.format(site['name']))
     #
     ## try to plot phosphate
     #try:
@@ -133,58 +187,6 @@ def gen_report(store, site):
 
 
 
-def make_phos_model(con_data, sur_data):
-
-    rating_model_1 = SurrogateRatingModel(con_data,
-                                          sur_data,
-                                          constituent_variable='TP',
-                                          surrogate_variables=['Turb_YSI'],#,'Discharge'],
-                                          match_method='nearest',
-                                          match_time=30)
-
-    rating_model_1.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-    rating_model_1.set_constituent_transform('log10')
-
-
-    try:
-        rating_model_2 = SurrogateRatingModel(con_data,
-                                          sur_data,
-                                          constituent_variable='TP',
-                                          surrogate_variables=['OrthoP','Turb_YSI'],
-                                          match_method='nearest',
-                                          match_time=30)
-
-        rating_model_2.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-        #rating_model_2.set_surrogate_transform(['log10'], surrogate_variable='OrthoP')
-        rating_model_2.set_constituent_transform('log10')
-
-
-
-        pvalue = rating_model_2._model._model.fit().f_pvalue
-        #reject insignificant models
-        #import pdb; pdb.set_trace()
-        # move rejection elsewhere
-        #if pvalue > 0.05 or pvalue < 0 or np.isnan(pvalue):
-        #    rating_model_2 = None
-    except:#
-        rating_model_2 = None
-
-    return rating_model_1, rating_model_2
-
-
-#XXX: procedure for creating fixed interval record
-def make_ssc_model(con_data, sur_data):
-
-    rating_model = SurrogateRatingModel(con_data,
-                                        sur_data,
-                                        constituent_variable= 'SSC',
-                                        surrogate_variables= ['Turb_YSI'],
-                                        match_method='nearest', match_time=30)
-
-    rating_model.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-    rating_model.set_constituent_transform('log10')
-    return rating_model
-
 def model_row_summary(model):
     if not model:
         return None
@@ -199,13 +201,3 @@ def model_row_summary(model):
     ]]
 
     return pd.DataFrame(row, columns=columns)
-
-
-def predictions_to_txt(model, site):
-    predicted_data = model._model.predict_response_variable(explanatory_data=model._surrogate_data,
-                                                           raw_response=True,
-                                                           bias_correction=True,
-                                                           prediction_interval=True)
-    constituent = model2.get_constituent_variable()
-    predicted_data.to_csv('model_data/{}_{}.csv',format('site',constituent))
-

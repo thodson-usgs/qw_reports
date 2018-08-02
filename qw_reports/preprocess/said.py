@@ -6,6 +6,7 @@ from hygnd.munge import fill_iv_w_dv, filter_param_cd, interp_to_freq, update_me
 
 #import table to lookup field names
 from qw_reports.codes import pn
+from qw_reports.model import HierarchicalModel
 
 class SAIDProject(NWISStore):
     """Rename to ModelProject
@@ -44,6 +45,18 @@ class SurrogateModel(Collection):
     """
     def __init__(self, site_id, store_path):
         super().__init__(site_id, store_path, 'said')
+
+    def run_model(self, constituent, model_list):
+        model = HierachicalModel(con_df, sur_df, model_list)
+
+        predictions = model.get_predictions()
+
+        iv = self.get('iv')
+
+        iv = update_merge(iv, predictions)
+        self.put('iv')
+
+
 
     def stage(self, proxy_id=None,
               verbose=True,
@@ -88,7 +101,7 @@ class SurrogateModel(Collection):
 
         iv = format_surrogate_df(iv)
         qwdata = format_constituent_df(qwdata)
-
+        qwdata['PP'] = qwdata['TP'] - qwdata['OrthoP']
         #what is being put
         self.put('iv', iv)
         self.put('qwdata',qwdata)

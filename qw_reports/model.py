@@ -295,12 +295,12 @@ class HierarchicalModel:
                 prediction_interval=True)
 
             try:
-                hierarchical_prediction = hierarchical_prediction.update(prediction)
+                hierarchical_prediction.update(prediction)
 
-            except NameError:
+            except:
                 hierarchical_prediction = prediction
 
-        return prediction
+        return hierarchical_prediction
 
     def summary(self):
         """Generates a summary table with basic statistics for each submodel.
