@@ -1,5 +1,5 @@
 #FLUX_CONV = 0.00269688566
-from qw_reports.reports import make_ssc_model
+#from qw_reports.reports import make_ssc_model
 from hygnd.munge import update_merge
 # Conversions
 mg2lbs = 2.20462e-6

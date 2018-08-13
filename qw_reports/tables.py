@@ -1,8 +1,8 @@
 import pandas as pd
 
 from linearmodel.datamanager import DataManager
-from qw_reports.analysis.loads import nitrate_load, phos_load, ssc_load
-from qw_reports.reports import make_phos_model
+from qw_reports.analysis.loads import mean_annual_load
+#from qw_reports.reports import make_phos_model
 
 class ReportTable():
     """All children must contain a data object
@@ -51,7 +51,7 @@ class LoadTable(ReportTable):
 
         data = pd.DataFrame(data=None, columns=columns)
 
-        for site in self.template.sites:
+        for site in self.template['sites']:
 
             if water_years:
                 entry = pd.Series(index=columns, name=site['id'])
@@ -85,14 +85,9 @@ class LoadTable(ReportTable):
             print('site {} not found'.format(site['name']))
 
 
-        sur_data = DataManager(sur_df)
-        con_data = DataManager(con_df)
-
-        N = nitrate_load(sur_data, wy)
-        SSC = ssc_load(con_data, sur_data, wy)
-
-        p_model1, p_model2 = make_phos_model(con_data, sur_data)
-        TP = phos_load(p_model1, p_model2, wy)
+        N = mean_annual_load(sur_df['Discharge'], sur_df['NitrateSurr'], wy=wy)
+        SSC = mean_annual_load(sur_df['Discharge'],sur_df['SSC'], wy=wy, units='tons')
+        TP = mean_annual_load(sur_df['Discharge'], sur_df['TP'], wy=wy)
 
         entry = pd.Series(data = [N, TP, SSC], index = self.columns, name= site_id)
         return entry
