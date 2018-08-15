@@ -84,8 +84,9 @@ class SurrogateModel(Collection):
 
         if not iv.empty:
             # clip data to time interval
-            for df in iv, dv, qwdata:
-                df = df[start:end]
+            iv = iv[start:end]
+            dv = dv[start:end]
+            qwdata = qwdata[start:end]
 
             iv = iv.drop_duplicates()
             iv = interp_to_freq(iv, freq=15, interp_limit=120)
@@ -101,6 +102,7 @@ class SurrogateModel(Collection):
 
         iv = format_surrogate_df(iv)
         qwdata = format_constituent_df(qwdata)
+        # can't use grap sample for estimating DP, fix
         qwdata['PP'] = qwdata['TP'] - qwdata['OrthoP']
         #what is being put
         self.put('iv', iv)
