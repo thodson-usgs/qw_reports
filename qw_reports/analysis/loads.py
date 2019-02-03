@@ -27,7 +27,7 @@ def load_ts(discharge, constituent, units='lbs'):
 
     return df
 
-def mean_annual_load(discharge, constituent, units='lbs', wy=None):
+def mean_annual_load(discharge, constituent, units='lbs', wy=None, year_range=None):
     """Calculate the mean annual load
 
     Assumes a 15-minute interval.
@@ -45,6 +45,12 @@ def mean_annual_load(discharge, constituent, units='lbs', wy=None):
     if wy:
         start, end = wy_dates(wy)
         flux = flux.loc[start:end]
+
+    elif year_range:
+        start, _ = wy_dates(year_range[0])
+        _, end = wy_dates(year_range[-1])
+        flux = flux.loc[start:end]
+
 
     mean_15m_flux = flux.mean()
     return mean_15m_flux * SAMPLES_PER_YEAR

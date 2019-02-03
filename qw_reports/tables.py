@@ -51,7 +51,7 @@ class LoadTable(ReportTable):
 
         data = pd.DataFrame(data=None, columns=columns)
 
-        for site in self.template['sites']:
+        for site in self.template.sites:
 
             if water_years:
                 entry = pd.Series(index=columns, name=site['id'])
@@ -61,7 +61,7 @@ class LoadTable(ReportTable):
                     for constituent in annual_entry.index:
                         entry.loc[constituent, year] = annual_entry.loc[constituent]
 
-                mean_entry = self.calculate_site_load(site['id'])
+                mean_entry = self.calculate_site_load(site['id'], year_range=[water_years[0], water_years[-1]])
                 for constituent in mean_entry.index:
                     entry.loc[constituent, 'mean'] = mean_entry.loc[constituent]
 
@@ -73,7 +73,7 @@ class LoadTable(ReportTable):
         return data
 
 
-    def calculate_site_load(self, site_id, wy=None):
+    def calculate_site_load(self, site_id, wy=None, year_range=None):
         """
         TODO: make this a method of the station object
         """
@@ -85,9 +85,9 @@ class LoadTable(ReportTable):
             print('site {} not found'.format(site['name']))
 
 
-        N = mean_annual_load(sur_df['Discharge'], sur_df['NitrateSurr'], wy=wy)
-        SSC = mean_annual_load(sur_df['Discharge'],sur_df['SSC'], wy=wy, units='tons')
-        TP = mean_annual_load(sur_df['Discharge'], sur_df['TP'], wy=wy)
+        N = mean_annual_load(sur_df['Discharge'], sur_df['NitrateSurr'], wy=wy, year_range=year_range)
+        SSC = mean_annual_load(sur_df['Discharge'],sur_df['SSC'], wy=wy, year_range=year_range, units='tons')
+        TP = mean_annual_load(sur_df['Discharge'], sur_df['TP'], year_range=year_range, wy=wy)
 
         entry = pd.Series(data = [N, TP, SSC], index = self.columns, name= site_id)
         return entry
