@@ -191,14 +191,13 @@ class Report:
             except:
                 os.mkdir(directory)
 
+        #pp_model_list = [
+        #    ['log(PP)',['log(Turb_HACH)']],
+        #    ['log(PP)',['log(Turb_YSI)']]
+        #]
 
-        pp_model_list = [
-            ['log(PP)',['log(Turb_HACH)']],
-            ['log(PP)',['log(Turb_YSI)']]
-        ]
 
-
-        self.run_model(pp_model_list, 'PP')
+        #self.run_model(pp_model_list, 'PP')
 
         ssc_model_list = [
             ['log(SSC)',['log(Turb_HACH)']],

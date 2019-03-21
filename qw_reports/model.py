@@ -50,7 +50,7 @@ def model_TP(con_data, sur_data):
 
         pvalue = rating_model_2._model._model.fit().f_pvalue
         #reject insignificant models
-        #import pdb; pdb.set_trace()
+        #pdb; pdb.set_trace()
         # move rejection elsewhere
         #if pvalue > 0.05 or pvalue < 0 or np.isnan(pvalue):
         #    rating_model_2 = None
@@ -185,7 +185,6 @@ class HierarchicalModel:
         Called by __init__.
 
         """
-
         self._set_variables_and_transforms()
         #specify (n) the number of models managed within the instance
         n = len(self._model_list)
@@ -199,32 +198,41 @@ class HierarchicalModel:
         for i in range(n):
             #FIXME try to fix this by taking a the set of surrogate_variables
             surrogate_set = list(set(self._surrogates[i])) #removes duplicates
-            self._models[i] = SurrogateRatingModel(self._constituent_data,
-                                                   self._surrogate_data,
-                                                   constituent_variable = self._constituent,
-                                                   surrogate_variables = surrogate_set,
-                                                   match_method = 'nearest',
-                                                   #should set match in init
-                                                   match_time = self.match_time)
+            try:
+                self._models[i] = SurrogateRatingModel(self._constituent_data,
+                                                       self._surrogate_data,
+                                                       constituent_variable = self._constituent,
+                                                       surrogate_variables = surrogate_set,
+                                                       match_method = 'nearest',
+                                                       #should set match in init
+                                                       match_time = self.match_time)
 
-            for surrogate in surrogate_set:
-                #ceate an index of each occurance of the surrogate
-                surrogate_transforms = [self._surrogate_transforms[i][j] for j,v in enumerate(self._surrogates[i]) if v == surrogate]
-                #set the surrogate transforms based on the surrogate index
-                self._models[i].set_surrogate_transform(surrogate_transforms, surrogate_variable=surrogate)
+                for surrogate in surrogate_set:
+                    #ceate an index of each occurance of the surrogate
+                    surrogate_transforms = [self._surrogate_transforms[i][j] for j,v in enumerate(self._surrogates[i]) if v == surrogate]
+                    #set the surrogate transforms based on the surrogate index
+                    self._models[i].set_surrogate_transform(surrogate_transforms, surrogate_variable=surrogate)
 
-            #set transforms for each surrogate
-            #for surrogate in self._surrogates[i]:
-            #    self._models[i].set_surrogate_transform(self._surrogate_transforms[i], surrogate_variable=surrogate)
+                #set transforms for each surrogate
+                #for surrogate in self._surrogates[i]:
+                #    self._models[i].set_surrogate_transform(self._surrogate_transforms[i], surrogate_variable=surrogate)
 
-            self._models[i].set_constituent_transform(self._constituent_transforms[i])
+                self._models[i].set_constituent_transform(self._constituent_transforms[i])
 
-            #FIXME depends on private methods
-            res = self._models[i]._model._model.fit()
-            self._pvalues[i] = res.f_pvalue
-            self._rsquared[i] = res.rsquared_adj
-            self._nobs[i] = res.nobs
-            #TODO check transforms
+                #FIXME depends on private methods
+                res = self._models[i]._model._model.fit()
+                self._pvalues[i] = res.f_pvalue
+                self._rsquared[i] = res.rsquared_adj
+                self._nobs[i] = res.nobs
+                #TODO check transforms
+            except:
+                pass
+
+        #XXX added this as well as try except 2019/02/07
+        #while None in self._models:
+        #    self._models.remove(None)
+
+
 
     def _set_variables_and_transforms(self):
         """Parses surrogates, constituent, and their transforms.
@@ -283,6 +291,8 @@ class HierarchicalModel:
             #skip models that aren't robust
             #TODO replace hard nobs thresh with thres * (surrogatecount + 1)
             if self._nobs[i] < 10 or self._pvalues[i] > self.p_thres:
+                continue
+            elif self._rsquared[i] == 0: #skip models that had no data
                 continue
 
             elif type(explanatory_data) is type(None):

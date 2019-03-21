@@ -102,6 +102,7 @@ class SurrogateModel(Collection):
 
         iv = format_surrogate_df(iv)
         qwdata = format_constituent_df(qwdata)
+        # can't use grap sample for estimating DP, fix
         qwdata['PP'] = qwdata['TP'] - qwdata['OrthoP']
         #what is being put
         self.put('iv', iv)
