@@ -80,7 +80,6 @@ def run_model(store, site, model_list, constituent):
     except KeyError:
         print('site {} not found'.format(site['name']))
 
-
     model = HierarchicalModel(con_df, sur_df, model_list)
 
     predictions = model.get_prediction()
@@ -108,8 +107,7 @@ class Report:
 
         except KeyError:
             print('site {} not found'.format(self.site['name']))
-
-
+        
         model = HierarchicalModel(con_df, sur_df, model_list)
 
         predictions = model.get_prediction()

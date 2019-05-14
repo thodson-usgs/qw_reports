@@ -198,35 +198,37 @@ class HierarchicalModel:
         for i in range(n):
             #FIXME try to fix this by taking a the set of surrogate_variables
             surrogate_set = list(set(self._surrogates[i])) #removes duplicates
-            try:
-                self._models[i] = SurrogateRatingModel(self._constituent_data,
-                                                       self._surrogate_data,
-                                                       constituent_variable = self._constituent,
-                                                       surrogate_variables = surrogate_set,
-                                                       match_method = 'nearest',
-                                                       #should set match in init
-                                                       match_time = self.match_time)
+            
+            self._models[i] = SurrogateRatingModel(self._constituent_data,
+                                                   self._surrogate_data,
+                                                   constituent_variable = self._constituent,
+                                                   surrogate_variables = surrogate_set,
+                                                   match_method = 'nearest',
+                                                   #should set match in init
+                                                   match_time = self.match_time)
 
-                for surrogate in surrogate_set:
-                    #ceate an index of each occurance of the surrogate
-                    surrogate_transforms = [self._surrogate_transforms[i][j] for j,v in enumerate(self._surrogates[i]) if v == surrogate]
-                    #set the surrogate transforms based on the surrogate index
-                    self._models[i].set_surrogate_transform(surrogate_transforms, surrogate_variable=surrogate)
+            for surrogate in surrogate_set:
+                #ceate an index of each occurance of the surrogate
+                surrogate_transforms = [self._surrogate_transforms[i][j] for j,v in enumerate(self._surrogates[i]) if v == surrogate]
+                #set the surrogate transforms based on the surrogate index
+                #XXX testing if else
+                #if len(surrogate_transforms) != 1: #XXX consider using >
+                #    raise ValueError('Only works with single surrogate transform')
+                #else:
+                #    surrogate_transforms = surrogate_transforms[0]
+                self._models[i].set_surrogate_transform(surrogate_transforms, surrogate_variable=surrogate)
 
-                #set transforms for each surrogate
-                #for surrogate in self._surrogates[i]:
-                #    self._models[i].set_surrogate_transform(self._surrogate_transforms[i], surrogate_variable=surrogate)
+            #set transforms for each surrogate
+            #for surrogate in self._surrogates[i]:
+            #    self._models[i].set_surrogate_transform(self._surrogate_transforms[i], surrogate_variable=surrogate)
+            self._models[i].set_constituent_transform(self._constituent_transforms[i])
 
-                self._models[i].set_constituent_transform(self._constituent_transforms[i])
-
-                #FIXME depends on private methods
-                res = self._models[i]._model._model.fit()
-                self._pvalues[i] = res.f_pvalue
-                self._rsquared[i] = res.rsquared_adj
-                self._nobs[i] = res.nobs
-                #TODO check transforms
-            except:
-                pass
+            #FIXME depends on private methods
+            res = self._models[i]._model._model.fit()
+            self._pvalues[i] = res.f_pvalue
+            self._rsquared[i] = res.rsquared_adj
+            self._nobs[i] = res.nobs
+            #TODO check transforms
 
         #XXX added this as well as try except 2019/02/07
         #while None in self._models:
@@ -297,7 +299,7 @@ class HierarchicalModel:
 
             elif type(explanatory_data) is type(None):
                 explanatory_data = self._models[i]._surrogate_data
-
+            
             prediction = self._models[i]._model.predict_response_variable(
                 explanatory_data = explanatory_data,
                 raw_response=True,
