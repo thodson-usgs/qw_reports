@@ -68,7 +68,7 @@ def process_nitrate(store, site):
 
     update_table(store, iv_path, df)
 
-def run_model(store, site, model_list, constituent):
+def un_model(store, site, model_list, constituent):
     db_path = '/said/{}/'.format(site['id'])
     iv_path = db_path + 'iv'
     qwdata_path = db_path + 'qwdata'
@@ -154,7 +154,7 @@ class Report:
     def run_all_models(self):
         """Generates a plots and model data for a given site
         """
-        self.process_nitrate()
+        #self.process_nitrate()
         try:
             sur_df = self.store.get('/said/{}/iv'.format(self.site['id']))
             con_df = self.store.get('/said/{}/qwdata'.format(self.site['id']))
@@ -194,14 +194,17 @@ class Report:
         #    ['log(PP)',['log(Turb_YSI)']]
         #]
 
-
         #self.run_model(pp_model_list, 'PP')
+
+        no3_model_list = [
+            ['Nitrate',['NitrateSurr']],
+        ]
+        self.run_model(no3_model_list, 'Nitrate')
 
         ssc_model_list = [
             ['log(SSC)',['log(Turb_HACH)']],
             ['log(SSC)',['log(Turb_YSI)']]
         ]
-
         self.run_model(ssc_model_list, 'SSC')
 
         tp_model_list = [
@@ -210,7 +213,6 @@ class Report:
             ['log(TP)',['log(Turb_HACH)']],
             ['log(TP)',['log(Turb_YSI)']]
         ]
-
         self.run_model(tp_model_list, 'TP')
 
         #write ssc model report

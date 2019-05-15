@@ -172,9 +172,9 @@ def plot_nitrate(con_df, sur_df, filename=None, title=None, start_date=None, end
 
     plot_discharge_ts(sur_df['Discharge'], ax=ax1)
 
-    plot_concentration_ts(sur_df, 'NitrateSurr', ax2, obs=con_df['Nitrate'], color='green')
+    plot_concentration_ts(sur_df, 'Nitrate', ax2, obs=con_df['Nitrate'], color='green')
 
-    plot_load_ts(sur_df, 'NitrateSurr','Discharge', ax3)
+    plot_load_ts(sur_df, 'Nitrate','Discharge', ax3)
 
     format_load_plot(fig, 'Nitrate (mg/L-N)', 'Nitrate (tons/day)',
                      start_date=start_date, end_date=end_date,

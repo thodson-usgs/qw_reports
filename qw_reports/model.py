@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib as mpl
 
+from math import ceil
+
+
 from said.surrogatemodel import SurrogateRatingModel
 from linearmodel.datamanager import DataManager
 
@@ -313,6 +316,23 @@ class HierarchicalModel:
                 hierarchical_prediction = prediction
 
         return hierarchical_prediction
+
+    def plot_model_pred_vs_obs(self, axes=None):
+        n = len(self._models)
+        cols = 2
+        rows = ceil(n/cols)
+
+        if axes is None:
+            fig, axes = plt.subplots(rows, cols, sharex=True, sharey=True)
+        for ax, model in zip(axes.flatten(), self._models):
+            model._model._plot_model_pred_vs_obs(ax)
+            ax.set_title('+'.join(model._model.get_explanatory_variables()))
+            if not ax.is_last_row():
+                ax.set_xlabel('')
+
+            if not ax.is_first_col():
+                ax.set_ylabel('')
+
 
     def summary(self):
         """Generates a summary table with basic statistics for each submodel.

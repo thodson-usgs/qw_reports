@@ -79,15 +79,15 @@ class LoadTable(ReportTable):
         """
         try:
             sur_df = self.store.get('/said/{}/iv'.format(site_id))
-            N = mean_annual_load(sur_df['Discharge'], sur_df['NitrateSurr'], wy=wy, year_range=year_range)
-            SSC = mean_annual_load(sur_df['Discharge'],sur_df['SSC'], wy=wy, year_range=year_range, units='tons')
-            TP = mean_annual_load(sur_df['Discharge'], sur_df['TP'], year_range=year_range, wy=wy)
-        
-            entry = pd.Series(data = [N, TP, SSC], index = self.columns, name= site_id)
-            return entry
+            con_df = self.store.get('/said/{}/qwdata'.format(site_id))
 
         except KeyError:
-            print('site {} not found'.format(site_id))
+            print('site {} not found'.format(site['name']))
 
 
-        
+        N = mean_annual_load(sur_df['Discharge'], sur_df['Nitrate'], wy=wy, year_range=year_range)
+        SSC = mean_annual_load(sur_df['Discharge'],sur_df['SSC'], wy=wy, year_range=year_range, units='tons')
+        TP = mean_annual_load(sur_df['Discharge'], sur_df['TP'], year_range=year_range, wy=wy)
+
+        entry = pd.Series(data = [N, TP, SSC], index = self.columns, name= site_id)
+        return entry
