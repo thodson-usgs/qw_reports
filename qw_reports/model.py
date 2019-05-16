@@ -24,94 +24,6 @@ import pandas as pd
 #XXX write out each import
 from qw_reports.plot import *
 
-def model_TP(con_data, sur_data):
-
-    rating_model_1 = SurrogateRatingModel(con_data,
-                                          sur_data,
-                                          constituent_variable='TP',
-                                          surrogate_variables=['Turb_YSI'],#,'Discharge'],
-                                          match_method='nearest',
-                                          match_time=30)
-
-    rating_model_1.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-    rating_model_1.set_constituent_transform('log10')
-
-
-    try:
-        rating_model_2 = SurrogateRatingModel(con_data,
-                                          sur_data,
-                                          constituent_variable='TP',
-                                          surrogate_variables=['OrthoP','Turb_YSI'],
-                                          match_method='nearest',
-                                          match_time=30)
-
-        rating_model_2.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-        #rating_model_2.set_surrogate_transform(['log10'], surrogate_variable='OrthoP')
-        rating_model_2.set_constituent_transform('log10')
-
-
-
-        pvalue = rating_model_2._model._model.fit().f_pvalue
-        #reject insignificant models
-        #pdb; pdb.set_trace()
-        # move rejection elsewhere
-        #if pvalue > 0.05 or pvalue < 0 or np.isnan(pvalue):
-        #    rating_model_2 = None
-    except:#
-        rating_model_2 = None
-
-    return rating_model_1, rating_model_2
-
-
-def model_pp(con_df, sur_df):
-    con_data = DataManager(sur_df)
-    sur_data = DataManager(con_df)
-
-    con_data['PP'] = con_data['TP']-con_data['OrthoP']
-
-    rating_model = SurrogateRatingModel(con_data,
-                                        sur_data,
-                                        constituent_variable= 'PP',
-                                        surrogate_variables= ['Turb_YSI'],
-                                        match_method='nearest', match_time=30)
-
-    rating_model.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-    rating_model.set_constituent_transform('log10')
-
-    predicted_data = rating_model._model.predict_response_variable(explanatory_data=rating_model._surrogate_data,
-                                                            raw_response=True,
-                                                            bias_correction=True,
-                                                            prediction_interval=True)
-
-
-    return predicted_data
-
-
-#XXX: procedure for creating fixed interval record
-def model_ssc(con_df, sur_df, site=None, summary=False):
-    con_data = DataManager(sur_df)
-    sur_data = DataManager(con_df)
-
-    rating_model = SurrogateRatingModel(con_data,
-                                        sur_data,
-                                        constituent_variable= 'SSC',
-                                        surrogate_variables= ['Turb_YSI'],
-                                        match_method='nearest', match_time=30)
-
-    rating_model.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-    rating_model.set_constituent_transform('log10')
-
-    predicted_data = rating_model._model.predict_response_variable(explanatory_data=rating_model._surrogate_data,
-                                                            raw_response=True,
-                                                            bias_correction=True,
-                                                            prediction_interval=True)
-
-
-    if summary and site:
-        predictions_to_txt(rating_model, site)
-
-    return predicted_data
-
 def model_row_summary(model):
     if not model:
         return None
@@ -167,6 +79,7 @@ class HierarchicalModel:
         :type surrogate_data: DataManger
         :param model_list:
         """
+        #HierarchicalModel.pad_data(surrogate_df) 
         self._surrogate_data = DataManager(surrogate_df)
         self._constituent_data = DataManager(constituent_df)
 
@@ -178,10 +91,18 @@ class HierarchicalModel:
         self.p_thres = p_thres
 
 
-
         self._create_models()
 
+    @staticmethod
+    def pad_data(sur_df):
+        """ Makes surrogates non negative and > 0
+        TOOD: only pad data subject to log transformation
+        TODO: only use positive data in mean
+        """
+        for col in sur_df:
+            sur_df.loc[sur_df[col] <= 0, col] = sur_df[col].mean() * 0.001
 
+    
     def _create_models(self):
         """Populate a HierarchicalModel with SurrogateRatingModel objects.
 
@@ -316,10 +237,11 @@ class HierarchicalModel:
                 hierarchical_prediction = prediction
 
         return hierarchical_prediction
+        
 
     def plot_model_pred_vs_obs(self, axes=None):
         n = len(self._models)
-        cols = 2
+        cols = min(n, 2)
         rows = ceil(n/cols)
 
         if axes is None:
@@ -363,35 +285,7 @@ class HierarchicalModel:
 
         return summary
 
-
-
-class TurbiditySurrogateModel:
-    """
-    TODO expand to include other turbidity data sources
-    """
-    def __init__(self, con_data, sur_data):
-        rating_model = SurrogateRatingModel(con_data,
-                                            sur_data,
-                                            constituent_variable= 'SSC',
-                                            surrogate_variables= ['Turb_YSI'],
-                                            match_method='nearest', match_time=30)
-
-        rating_model.set_surrogate_transform(['log10'], surrogate_variable='Turb_YSI')
-        rating_model.set_constituent_transform('log10')
-
-    def predict(explanatory_data=None):
-        if explanatory_data is None:
-            explanatory_data = self.rating_model._surrogate_data
-
-        predicted_data = rating_model._model.predict_response_variable(explanatory_data=explanatory_data,
-                                                            raw_response=True,
-                                                            bias_correction=True,
-                                                            prediction_interval=True)
-
-
-
     
-
 def predictions_to_txt(model, site):
     predicted_data = model._model.predict_response_variable(explanatory_data=model._surrogate_data,
                                                            raw_response=True,
