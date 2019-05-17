@@ -149,7 +149,7 @@ pn = {
     '00060': 'Discharge',
     'p80154': 'SSC',
     'p00665': 'TP',
-    'p00671': 'OrthoP',
+    #'p00671': 'OrthoP', XXX
     'p00631': 'Nitrate',
     'p70331': '<62'
 }
