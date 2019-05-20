@@ -124,7 +124,10 @@ nwis_to_said = {
     'site_no' : 'Site',
     'datetime':'DateTime',
     '00065':'Gage Height',
+    '00010' : 'Temp',
     '00095':'Spec Cond',
+    '00301' : 'DO%',
+    '00400' : 'pH',
     '63680_ysi' : 'Turb_YSI',
     '63680_hach': 'Turb_HACH',
     '99133': 'NitrateSurr',
@@ -132,6 +135,7 @@ nwis_to_said = {
     '00060': 'Discharge',
     'p80154': 'SSC',
     'p00665': 'TP',
+    #'p00671': 'OrthoP', XXX
     'p00631': 'Nitrate',
     'p70331': '<62'
 }
@@ -141,7 +145,10 @@ pn = {
     'site_no' : 'Site',
     'datetime':'DateTime',
     '00065':'Gage Height',
+    '00010' : 'Temp',
     '00095':'Spec Cond',
+    '00301' : 'DO%',
+    '00400' : 'pH',
     '63680_ysi' : 'Turb_YSI',
     '63680_hach': 'Turb_HACH',
     '99133': 'NitrateSurr',
