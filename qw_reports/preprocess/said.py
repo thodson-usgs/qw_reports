@@ -160,13 +160,37 @@ def format_constituent_df(df):
 
 #duplicates previous function
 def format_surrogate_df(df):
-    check_params = ['00060','00095','63680_ysi','63680_hach','99133', '51289']
+    check_params = ['00060','00095','63680_ysi','63680_hach','99133', '51289',
+                    '00301','00400','00010']
     sur_params = []
+    renamed_cols = rename_params(df.columns.to_list())
+    df.columns = renamed_cols
+
     for i in check_params:
         if i in df.columns:
             sur_params.append(i)
 
+    #import pdb; pdb.set_trace()
     #only get params in the df
     out_df = df[sur_params]
     out_cols = {param: pn[param] for param in sur_params}
     return out_df.rename(columns=out_cols)
+
+def rename_params(param_list):
+    check_params = ['00060','00095','63680_ysi','63680_hach','99133', '51289',
+                    '00301','00400','00010']
+    out_list = param_list.copy()
+    #import pdb; pdb.set_trace()
+    for param in check_params:
+        i = index_containing_substring(param_list, param)
+        if i is not None:
+            out_list[i] = param
+    return out_list
+            
+
+def index_containing_substring(the_list, substring):
+    for i, s in enumerate(the_list):
+        if substring in s and '_cd' not in s:
+            return i
+    return None
+
