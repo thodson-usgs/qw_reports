@@ -17,6 +17,40 @@ class ReportTable():
         else:
             pass
 
+class SampleTable(ReportTable):
+    def __init__(self, store_path, project_template):
+        """
+        """
+        #import pdb; pdb.set_trace()
+        #super.__init__
+        self.store_path = store_path
+        self.template = project_template
+        self.columns = ['No. Obs.', 'Mean', 'Median']
+        #self.columns = ['No. Obs.', 'No. Uncen. Obs', 'Mean', 'Median']
+
+        self.data = pd.DataFrame(data=None, columns=self.columns)
+        self.data.index.name = 'Site ID'
+
+
+    def generate(self, constituent):
+        for site in self.template.sites:
+            df = self.get_samples(site['id'])
+            series = df[constituent].dropna()
+
+            self.data.loc[site['id'], 'Mean'] = series.mean()
+            self.data.loc[site['id'], 'No. Obs.'] = series.count()
+            self.data.loc[site['id'], 'Median'] = series.median()
+
+    def get_samples(self, site_id):
+        try:
+            with pd.HDFStore(self.store_path, mode='r') as store:
+                df = store.get('/said/{}/qwdata'.format(site_id))
+
+        except KeyError:
+            print('site {} not found'.format(site_id) )
+
+        return df
+ 
 class LoadTable(ReportTable):
     """
     """
@@ -82,7 +116,7 @@ class LoadTable(ReportTable):
             con_df = self.store.get('/said/{}/qwdata'.format(site_id))
 
         except KeyError:
-            print('site {} not found'.format(site['name']))
+            print('site {} not found'.format(site_id))
 
 
         N = mean_annual_load(sur_df['Discharge'], sur_df['Nitrate'], wy=wy, year_range=year_range)

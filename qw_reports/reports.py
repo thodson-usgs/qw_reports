@@ -96,7 +96,7 @@ class Report:
         self.summary_table = pd.DataFrame(columns=SUMMARY_COLS)
 
 
-    def run_model(self,model_list, constituent):
+    def run_model(self,model_list, constituent, match_time=30):
         db_path = '/said/{}/'.format(self.site['id'])
         iv_path = db_path + 'iv'
         qwdata_path = db_path + 'qwdata'
@@ -108,7 +108,7 @@ class Report:
         except KeyError:
             print('site {} not found'.format(self.site['name']))
         
-        model = HierarchicalModel(con_df, sur_df, model_list)
+        model = HierarchicalModel(con_df, sur_df, model_list, match_time)
 
         predictions = model.get_prediction()
         sur_df = update_merge(sur_df, predictions)
