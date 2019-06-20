@@ -225,8 +225,8 @@ class HierarchicalModel:
         for i in model_ranks:
             #skip models that aren't robust
             #TODO replace hard nobs thresh with thres * (surrogatecount + 1)
-            if self._nobs[i] < 10 or self._pvalues[i] > self.p_thres:
-                continue
+            if self._nobs[i] < self.min_samples or self._pvalues[i] > self.p_thres:
+                pass #continue
             elif self._rsquared[i] == 0: #skip models that had no data
                 continue
 
@@ -238,7 +238,6 @@ class HierarchicalModel:
                 raw_response=True,
                 bias_correction=True,
                 prediction_interval=True)
-
             try:
                 hierarchical_prediction.update(prediction)
 

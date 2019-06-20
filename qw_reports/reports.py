@@ -90,13 +90,15 @@ def un_model(store, site, model_list, constituent):
     #summary.to_csv('report/{}_{}_summary.csv'.format(site['name'],constituent))
 
 class Report:
-    def __init__(self, store, site):
+    def __init__(self, store, site, min_samples=10):
         self.store = store
         self.site = site
         self.summary_table = pd.DataFrame(columns=SUMMARY_COLS)
+        self.min_samples = min_samples
+        import pdb; pdb.set_trace()
 
 
-    def run_model(self,model_list, constituent, match_time=30):
+    def run_model(self,model_list, constituent, match_time=30, min_samples=None):
         db_path = '/said/{}/'.format(self.site['id'])
         iv_path = db_path + 'iv'
         qwdata_path = db_path + 'qwdata'
@@ -107,9 +109,12 @@ class Report:
 
         except KeyError:
             print('site {} not found'.format(self.site['name']))
-        
-        model = HierarchicalModel(con_df, sur_df, model_list, match_time)
+       
+        if min_samples is None:
+            min_samples = self.min_samples
 
+        import pdb; pdb.set_trace()
+        model = HierarchicalModel(con_df, sur_df, model_list, match_time, min_samples)
         predictions = model.get_prediction()
         sur_df = update_merge(sur_df, predictions)
         self.store.put(iv_path, sur_df)
@@ -189,7 +194,7 @@ class Report:
             except:
                 os.mkdir(directory)
 
-        #pp_model_list = [
+        #pp_model_list = import pdb; pdb.set_trace()[
         #    ['log(PP)',['log(Turb_HACH)']],
         #    ['log(PP)',['log(Turb_YSI)']]
         #]
