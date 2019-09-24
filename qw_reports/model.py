@@ -68,7 +68,7 @@ class HierarchicalModel:
    """
 
     def __init__(self, constituent_df, surrogate_df, model_list,
-                 min_samples=10, max_extrapolation=0.1, match_time=30,
+                 min_samples=30, max_extrapolation=0.1, match_time=30,
                  p_thres=0.05):
         """ Initialize a HierarchicalModel
 
@@ -247,13 +247,17 @@ class HierarchicalModel:
         return hierarchical_prediction
         
 
-    def plot_model_pred_vs_obs(self, axes=None):
+    def plot_model_pred_vs_obs(self, axes=None, savepath=None, dpi=150):
         n = len(self._models)
         cols = min(n, 2)
         rows = ceil(n/cols)
 
         if axes is None:
             fig, axes = plt.subplots(rows, cols, sharex=True, sharey=True)
+
+        if not isinstance(axes, np.ndarray):
+            axes = np.array(axes)
+
         for ax, model in zip(axes.flatten(), self._models):
             model._model._plot_model_pred_vs_obs(ax)
             ax.set_title('+'.join(model._model.get_explanatory_variables()))
@@ -262,6 +266,17 @@ class HierarchicalModel:
 
             if not ax.is_first_col():
                 ax.set_ylabel('')
+
+        if savepath:
+            fig.savefig(savepath, dpi=dpi)
+
+
+    def report(self):
+        summary = ''
+        for model in self._models:
+            summary += model._model.get_model_summary().as_text()
+            summary += '\n'
+            return summary
 
 
     def summary(self):

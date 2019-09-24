@@ -40,6 +40,7 @@ class SampleTable(ReportTable):
             self.data.loc[site['id'], 'Mean'] = series.mean()
             self.data.loc[site['id'], 'No. Obs.'] = series.count()
             self.data.loc[site['id'], 'Median'] = series.median()
+        
 
     def get_samples(self, site_id):
         try:
@@ -125,3 +126,49 @@ class LoadTable(ReportTable):
 
         entry = pd.Series(data = [N, TP, SSC], index = self.columns, name= site_id)
         return entry
+
+def discrete_data_table(df):
+    """
+    Create a data table summarizing discrete water quality data.
+
+    Parameters
+    ----------
+    df : DataFrame
+        Nwis dataframe of discrete water samples
+    """
+    cols = [col for col in df.columns if col.startswith('p')]
+    cols = [col for col in cols if len(col)==6]
+    out = df[cols]
+    table = pd.DataFrame()
+    
+    table['n'] = out.count()
+    table['min'] = out.min()
+    table['max'] = out.max()
+    table['median'] = out.median()
+    table['25p'] = out.quantile(.25)
+    table['75p'] = out.quantile(.75)
+    
+    return table
+
+def data_range_table(iv, qwdata):
+    """
+    Create a data table summarizing the range of continous data
+    """
+    cols = iv.columns.tolist()
+    cols.remove('site_no')
+    iv = iv[cols]
+    temp = pd.merge_asof(qwdata, iv, left_index=True, right_index=True,
+                         tolerance=pd.Timedelta('120 min'))
+    
+    temp = temp[cols]
+    
+
+    out = pd.DataFrame()
+    out.index.name = 'USGS parameter code'
+    out['Min during discrete sample collection'] = temp.min()
+    out['Max during discrete sample collection'] = temp.max()
+    out['Min continuous data'] = iv.min()
+    out['Max continuous data'] = iv.max()
+
+    
+    return out

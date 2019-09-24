@@ -95,7 +95,6 @@ class Report:
         self.site = site
         self.summary_table = pd.DataFrame(columns=SUMMARY_COLS)
         self.min_samples = min_samples
-        import pdb; pdb.set_trace()
 
 
     def run_model(self,model_list, constituent, match_time=30, min_samples=None):
@@ -113,8 +112,8 @@ class Report:
         if min_samples is None:
             min_samples = self.min_samples
 
-        import pdb; pdb.set_trace()
-        model = HierarchicalModel(con_df, sur_df, model_list, match_time, min_samples)
+        model = HierarchicalModel(con_df, sur_df, model_list, match_time=match_time,
+                                  min_samples=min_samples)
         predictions = model.get_prediction()
         sur_df = update_merge(sur_df, predictions)
         self.store.put(iv_path, sur_df)
@@ -123,6 +122,14 @@ class Report:
         model_summary = pd.read_csv(temp_csv, sep=',')
         model_summary.columns=['model','# obs','adjusted r^2','p-value']
         self.summary_table = self.summary_table.append(model_summary)
+
+        report = model.report()
+        path = f"report/{constituent}_long_report.txt"
+        open(path, 'w').close()
+        with open(path,"a") as report_file:
+            report_file.write(report)
+        
+        model.plot_model_pred_vs_obs(savepath=f"report/{constituent}_pred_vs_obs_plot.png", dpi=150)
         #XXX update with class
         #print(model.summary())
         #summary.to_csv('report/{}_{}_summary.csv'.format(site['name'],constituent))
